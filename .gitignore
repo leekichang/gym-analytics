@@ -12,6 +12,9 @@ output_/
 *.pt
 *.gif
 *.png
+*.xml
+*.mp4
+*.json
 
 # Distribution / packaging
 .Python
