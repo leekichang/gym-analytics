@@ -8,6 +8,7 @@ __pycache__/
 data/
 runs/
 output/
+output_/
 *.pt
 *.gif
 *.png
