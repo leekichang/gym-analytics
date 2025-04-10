@@ -13,7 +13,7 @@ def prettify_and_save_xml(root_element, filename):
         f.write(reparsed.toprettyxml(indent="  "))  # 2-space indentation
 
 if __name__ == '__main__':
-    video_name = '1-leftcut'
+    video_name = 'L1'
     run_idx = video_name.split('-')[0]
     run_flag = False
     try:
