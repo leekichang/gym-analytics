@@ -13,21 +13,22 @@ import config as cfg # include the label-joint pairs
 import subprocess
 def fix_video_rotation(input_path, output_path):
             subprocess.run([
-                'ffmpeg', '-y', '-i', input_path,
-                '-c', 'copy', '-metadata:s:v', 'rotate=90', output_path
+                'ffmpeg', '-y', '-i', input_path, output_path
             ])
             
 if __name__=='__main__':
     model = YOLO('yolo11x-pose.pt')
-    data_path = f'./data/L1'
+    data_path = f'./data/2025-04-03'
     save_path = './output'
     # files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f))]
     files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,f))]
+    files = ['L1.mp4', 'B1.mp4', 'D1.mp4']
     for video_name in files:
-        video_name = video_name.split('/')[-1].split('.')[0]
-        os.makedirs(f'{save_path}/{video_name}', exist_ok=True)
+        # video_name = video_name.split('/')[-1].split('.')[0]
+        video_name = video_name.split('.')[0]
+        # os.makedirs(f'{save_path}/{video_name}', exist_ok=True)
         video_format = utils.get_format(files, video_name)
-        
+        fix_video_rotation(f'{data_path}/{video_name}.{video_format}', f'{data_path}/{video_name}_fixed.mp4')
         # if os.path.exists(f'{save_path}/{video_name}/{video_name}.pkl'):
         #     print(f"Video {video_name} already processed.")
         #     continue
@@ -35,10 +36,10 @@ if __name__=='__main__':
         #     print(f"Video {video_name} not found.")
         #     continue
             
-        src = f'{data_path}/{video_name}.{video_format}'
+        # src = f'./data/L1/L1.mp4'#.{video_format}'
         
-        # corrected_src = f'{save_path}/{video_name}/{video_name}_fixed.mp4'
-        corrected_src = './output.mp4'
+        corrected_src = f'{data_path}/{video_name}_fixed.mp4'
+        # corrected_src = './output.mp4'
         results = model.predict(source=corrected_src, save=True, project=save_path, name=video_name)
         # results = model.predict(source=src, save=True, project=save_path, name=video_name)
         data = {'keypoints': [], 'conf': []}

@@ -8,6 +8,7 @@ import time
 
 # --- 설정 ---
 exercises = ['1-frontcut', '1-leftcut', '1-rightcut']
+exercises = ['D1', 'B1', 'L1']
 video_paths = [f'./output/{excercise}/{excercise}.mp4' for excercise in exercises]
 
 # 1. 비디오 프레임 미리 로드 (preload)
@@ -32,7 +33,7 @@ conf_data_list = []
 for excercise in exercises:
     with open(f'./output/{excercise}/{excercise}.pkl', 'rb') as f:
         data = pickle.load(f)
-        joints_data = np.array(data['data'][15])   # shape: (n_frames, 3)
+        joints_data = np.array(data['keypoints'])[:,15,:]   # shape: (n_frames, 3)
         conf_data = np.array(data['conf'][15])       # shape: (n_frames,) (confidence score)
         joints_data_list.append(joints_data)
         conf_data_list.append(conf_data)
@@ -44,7 +45,7 @@ min_frames_conf = min(conf.shape[0] for conf in conf_data_list)
 frames = min(min_frames_video, min_frames_skel, min_frames_conf)
 
 # --- 프레임 스킵 설정 (속도 가속용) ---
-frame_skip = 2  # 예: 2프레임마다 한 프레임 처리 (전체 프레임의 절반 사용)
+frame_skip = 1  # 예: 2프레임마다 한 프레임 처리 (전체 프레임의 절반 사용)
 new_frames = list(range(0, frames, frame_skip))
 new_total_frames = len(new_frames)
 

@@ -43,7 +43,7 @@ out = cv2.VideoWriter("tracked_output.mp4", fourcc, fps, (width, height))
 # detection_data: YOLO 검출 시 bbox와 함께 keypoints 저장
 # 각 항목: {"bbox": [x1, y1, x2, y2], "keypoints": keypoints_array}
 detection_data = []
-
+for_save = {'keypoints': [], 'conf':[]}  # keypoints 저장용
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -99,28 +99,29 @@ while True:
             # track bbox와 가장 잘 매칭되는 detection의 keypoints 찾기 (IoU 기준)
             best_iou = 0
             best_kp = None
-            for det in detection_data:
+            for idx, det in enumerate(detection_data):
                 iou = compute_iou(det["bbox"], [x1, y1, x2, y2])
                 # print(f"IoU: {iou:.2f}")
                 if iou > best_iou:
                     best_iou = iou
-                    best_kp = det["keypoints"]
+                    best_kp = det["keypoints"][idx]
+                
             # IoU가 일정 threshold 이상이면 skeleton을 그리기 (예: 0.3 이상)
+         
             if best_kp is not None and best_iou > 0.3:
-                print("FUCK")
                 # 각 keypoint에 대해 원 그리기 (신뢰도 0.3 이상)
                 for point in best_kp:
-                    kp_x, kp_y, kp_conf = point
-                    if float(kp_conf) < 0.3:
-                        continue
-                    cv2.circle(frame, (int(kp_x), int(kp_y)), 3, (0, 0, 255), -1)
-                # skeleton 연결: 각 연결 선분에 대해 양 끝 keypoint의 신뢰도가 충분한 경우 선 그리기
-                for p1, p2 in skeleton_connections:
-                    if p1 < len(best_kp) and p2 < len(best_kp):
-                        pt1 = best_kp[p1]
-                        pt2 = best_kp[p2]
-                        if float(pt1[2]) > 0.3 and float(pt2[2]) > 0.3:
-                            cv2.line(frame, (int(pt1[0]), int(pt1[1])), (int(pt2[0]), int(pt2[1])), (255, 0, 0), 2)
+                    # print(point.data[0])
+                    kp_x, kp_y, kp_conf = point.data[0].transpose(1,0) # (17,3) -> (3,17)
+                    for_save['keypoints'].append([kp_x, kp_y])
+                    for_save['conf'].append(kp_conf)
+                    for x_, y_, conf_ in zip(kp_x, kp_y, kp_conf):
+                        if float(conf_) < 0.3:
+                            continue
+                        cv2.circle(frame, (int(x_), int(y_)), 3, (0, 0, 255), -1)
+                    for p1, p2 in skeleton_connections:
+                        if kp_conf[p1] > 0.5 and kp_conf[p2] > 0.5:  # 신뢰도 체크
+                            cv2.line(frame, (int(kp_x[p1]), int(kp_y[p1])), (int(kp_x[p2]), int(kp_y[p2])), (255, 0, 0), 2)
 
     # 처리된 프레임 출력 또는 저장
     out.write(frame)
@@ -128,3 +129,10 @@ while True:
 cap.release()
 out.release()
 print("처리 완료. 'tracked_output.mp4' 파일을 확인하세요.")
+import pickle
+print(np.shape(for_save["keypoints"]))
+print(np.shape(for_save["conf"]))
+for_save['keypoints'] = np.array(for_save['keypoints']).transpose(0,2,1)
+for_save['conf'] = np.array(for_save['conf'])
+with open("tracked_output.pkl", "wb") as f:
+    pickle.dump(for_save, f)
